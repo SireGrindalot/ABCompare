@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# Xcode user/project garbage
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+**/xcuserdata/
+**/DerivedData/
+
+# JUCE/Projucer/Xcode build outputs
+Builds/
+*.component
+*.vst3
+*.app
+*.dll
+*.so
+*.dylib
+
+# CMake
+build/
+out/
