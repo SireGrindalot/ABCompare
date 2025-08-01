@@ -48,6 +48,10 @@ public:
     void setUseReference (bool shouldUse) { useReference.store (shouldUse); }
     bool getUseReference () const         { return useReference.load(); }
 
+    // === Gain ===
+    void setReferenceGainDb (float db)    { referenceGainDb.store (db); }
+    float getReferenceGainDb () const     { return referenceGainDb.load(); }
+
 private:
     // === MP3 player + list ===
     juce::AudioFormatManager formatManager;
@@ -59,6 +63,9 @@ private:
 
     // A/B state and play control
     std::atomic<bool> useReference { false };
+
+    // Reference gain (dB, -12 to 0)
+    std::atomic<float> referenceGainDb { 0.0f };
 
     // Async play/stop control (avoid doing this on audio thread)
     std::atomic<bool> wantTransportPlaying { false };

@@ -1,11 +1,3 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin editor.
-
-  ==============================================================================
-*/
-
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
@@ -20,8 +12,6 @@ ABCompareAudioProcessorEditor::ABCompareAudioProcessorEditor (ABCompareAudioProc
     titleLabel.setText ("ABCompare Plugin", juce::dontSendNotification);
     titleLabel.setJustificationType (juce::Justification::centred);
     {
-        // Avoid deprecated Font constructors/setters:
-        // take the label's current font and transform it using non-deprecated helpers
         auto f = titleLabel.getFont().withHeight (18.0f).boldened();
         titleLabel.setFont (f);
     }
@@ -41,6 +31,22 @@ ABCompareAudioProcessorEditor::ABCompareAudioProcessorEditor (ABCompareAudioProc
     {
         audioProcessor.setUseReference (abButton.getToggleState());
     };
+
+    // --- Gain rotary ---
+    addAndMakeVisible (gainSlider);
+    gainSlider.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+    gainSlider.setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);
+    gainSlider.setRange (-12.0, 0.0, 0.01);
+    gainSlider.setValue (0.0);
+    gainSlider.onValueChange = [this]
+    {
+        audioProcessor.setReferenceGainDb ((float) gainSlider.getValue());
+    };
+
+    // Gain label (no value shown, just "Gain" below the knob)
+    addAndMakeVisible (gainLabel);
+    gainLabel.setText ("Gain", juce::dontSendNotification);
+    gainLabel.setJustificationType (juce::Justification::centred);
 
     // Populate list and auto-select first (triggers onChange)
     refreshMP3List();
@@ -65,7 +71,12 @@ void ABCompareAudioProcessorEditor::resized()
     auto row = area.removeFromTop (32);
     mp3Selector.setBounds (row.removeFromLeft (juce::jmax (200, getWidth() / 2)));
 
-    // A/B button centred in remaining area
+    // Gain rotary (centered below selector), label below
+    auto gainArea = area.removeFromTop (80).withSizeKeepingCentre (64, 64);
+    gainSlider.setBounds (gainArea);
+    gainLabel.setBounds (gainArea.withY (gainArea.getBottom() + 2).withHeight (20));
+
+    // A/B button centered near bottom
     abButton.setBounds (area.withSizeKeepingCentre (100, 28));
 }
 

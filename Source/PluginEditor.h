@@ -18,6 +18,8 @@ private:
 
     juce::ComboBox   mp3Selector;         // Dropdown for available MP3 files
     juce::ToggleButton abButton { "A/B" }; // OFF = Logic, ON = MP3
+    juce::Slider     gainSlider;           // Gain for MP3 only
+    juce::Label      gainLabel;
     juce::Label      titleLabel;
 
     void refreshMP3List();

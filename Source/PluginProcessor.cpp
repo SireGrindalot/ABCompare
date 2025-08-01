@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include <cmath>
 
 //==============================================================================
 ABCompareAudioProcessor::ABCompareAudioProcessor()
@@ -115,6 +116,13 @@ void ABCompareAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
         buffer.clear();
         juce::AudioSourceChannelInfo block (&buffer, 0, buffer.getNumSamples());
         transportSource.getNextAudioBlock (block);
+
+        // === Apply gain to reference ===
+        const float gainDb = referenceGainDb.load();
+        const float gainLin = std::pow (10.0f, gainDb / 20.0f);
+
+        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+            buffer.applyGain (ch, 0, buffer.getNumSamples(), gainLin);
     }
     else
     {
