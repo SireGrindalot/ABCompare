@@ -16,14 +16,7 @@ ABCompareAudioProcessor::ABCompareAudioProcessor()
 #endif
 {
     formatManager.registerBasicFormats();
-
-    // Use ~/Music/ABCompare for reference MP3s, create if missing
-    auto folder = juce::File::getSpecialLocation (juce::File::userMusicDirectory)
-                    .getChildFile ("ABCompare");
-    if (! folder.exists())
-        folder.createDirectory();
-
-    loadMP3FilesFromFolder (folder);
+    loadRefFilesFromFolder();
 }
 
 ABCompareAudioProcessor::~ABCompareAudioProcessor()
@@ -159,43 +152,58 @@ juce::AudioProcessorEditor* ABCompareAudioProcessor::createEditor()
 void ABCompareAudioProcessor::getStateInformation (juce::MemoryBlock&) {}
 void ABCompareAudioProcessor::setStateInformation (const void*, int) {}
 
-//=== MP3 handling ==============================================================
-void ABCompareAudioProcessor::loadMP3FilesFromFolder (const juce::File& folder)
+//=== Reference handling ========================================================
+void ABCompareAudioProcessor::loadRefFilesFromFolder()
 {
-    mp3Files.clear();
-    if (! folder.isDirectory()) return;
+    refFiles.clear();
+
+    auto folder = juce::File::getSpecialLocation (juce::File::userMusicDirectory)
+                    .getChildFile ("ABCompare");
+    if (! folder.exists())
+        folder.createDirectory();
 
     juce::Array<juce::File> found;
-    folder.findChildFiles (found, juce::File::findFiles, false, "*.mp3");
+    // All supported audio extensions
+    folder.findChildFiles (found, juce::File::findFiles, false,
+        "*.mp3;*.wav;*.flac;*.ogg;*.aif;*.aiff");
 
     for (auto& f : found)
-        mp3Files.add (f);
+        refFiles.addIfNotAlreadyThere (f);
+
+    // Always re-select index 0 (if any)
+    if (! refFiles.isEmpty())
+        playSelectedRef (0);
 }
 
-juce::StringArray ABCompareAudioProcessor::getAvailableMP3s() const
+void ABCompareAudioProcessor::rescanReferenceFolder()
+{
+    loadRefFilesFromFolder();
+}
+
+juce::StringArray ABCompareAudioProcessor::getAvailableRefs() const
 {
     juce::StringArray names;
-    for (auto& f : mp3Files) names.add (f.getFileName());
+    for (auto& f : refFiles) names.add (f.getFileName());
     return names;
 }
 
-void ABCompareAudioProcessor::setSelectedMP3Index (int index)
+void ABCompareAudioProcessor::setSelectedRefIndex (int index)
 {
-    if (index >= 0 && index < mp3Files.size())
-        playSelectedMP3 (index);
+    if (index >= 0 && index < refFiles.size())
+        playSelectedRef (index);
 }
 
-void ABCompareAudioProcessor::playSelectedMP3 (int index)
+void ABCompareAudioProcessor::playSelectedRef (int index)
 {
-    if (index < 0 || index >= mp3Files.size()) return;
+    if (index < 0 || index >= refFiles.size()) return;
 
-    std::unique_ptr<juce::AudioFormatReader> reader (formatManager.createReaderFor (mp3Files[index]));
+    std::unique_ptr<juce::AudioFormatReader> reader (formatManager.createReaderFor (refFiles[index]));
     if (reader == nullptr) return;
 
     std::unique_ptr<juce::AudioFormatReaderSource> newSource (new juce::AudioFormatReaderSource (reader.release(), true));
     transportSource.setSource (newSource.get(), 0, nullptr, newSource->getAudioFormatReader()->sampleRate);
     readerSource.reset (newSource.release());
-    currentFileIndex = index;
+    currentRefIndex = index;
     transportSource.setPosition (0.0);
     // Start/stop handled via AsyncUpdater based on host transport when refMode is ON.
 }

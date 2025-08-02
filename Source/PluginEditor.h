@@ -16,13 +16,15 @@ public:
 private:
     ABCompareAudioProcessor& audioProcessor;
 
-    juce::ComboBox   mp3Selector;         // Dropdown for available MP3 files
-    juce::ToggleButton abButton { "A/B" }; // OFF = Logic, ON = MP3
-    juce::Slider     gainSlider;           // Gain for MP3 only
-    juce::Label      gainLabel;
-    juce::Label      titleLabel;
+    // UI components
+    juce::Label         abLabel;            // "A / B" header
+    juce::ComboBox      refSelector;        // File dropdown
+    juce::ToggleButton  abSwitch;           // A/B toggle (custom styled)
+    juce::Slider        gainKnob;           // Reference gain knob
+    juce::Label         gainLabel;
 
-    void refreshMP3List();
+    // Utility
+    void refreshRefList();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ABCompareAudioProcessorEditor)
 };

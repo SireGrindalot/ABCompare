@@ -40,42 +40,36 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-    // === MP3 API for editor ===
-    juce::StringArray getAvailableMP3s() const;
-    void setSelectedMP3Index (int index);
+    // Reference File API for editor
+    juce::StringArray getAvailableRefs() const;
+    void setSelectedRefIndex (int index);
+    void rescanReferenceFolder();
 
-    // === A/B switch ===
+    // A/B switch
     void setUseReference (bool shouldUse) { useReference.store (shouldUse); }
     bool getUseReference () const         { return useReference.load(); }
 
-    // === Gain ===
+    // Gain
     void setReferenceGainDb (float db)    { referenceGainDb.store (db); }
     float getReferenceGainDb () const     { return referenceGainDb.load(); }
 
 private:
-    // === MP3 player + list ===
     juce::AudioFormatManager formatManager;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
     juce::AudioTransportSource transportSource;
 
-    juce::Array<juce::File> mp3Files;
-    int currentFileIndex = -1;
+    juce::Array<juce::File> refFiles;
+    int currentRefIndex = -1;
 
-    // A/B state and play control
     std::atomic<bool> useReference { false };
-
-    // Reference gain (dB, -12 to 0)
     std::atomic<float> referenceGainDb { 0.0f };
 
-    // Async play/stop control (avoid doing this on audio thread)
     std::atomic<bool> wantTransportPlaying { false };
     std::atomic<bool> transportIsPlaying   { false };
 
-    // AsyncUpdater callback (runs on message thread)
     void handleAsyncUpdate() override;
-
-    void loadMP3FilesFromFolder (const juce::File& folder);
-    void playSelectedMP3 (int index);
+    void loadRefFilesFromFolder();
+    void playSelectedRef (int index);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ABCompareAudioProcessor)
 };
