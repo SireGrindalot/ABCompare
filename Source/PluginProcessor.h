@@ -10,43 +10,51 @@ public:
     ABCompareAudioProcessor();
     ~ABCompareAudioProcessor() override;
 
-    // AudioProcessor
+    // ... (AudioProcessor methods are unchanged) ...
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
    #ifndef JucePlugin_PreferredChannelConfigurations
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
    #endif
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
-
-    // Editor
     juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override;
-
-    // Info
     const juce::String getName() const override;
     bool acceptsMidi() const override;
     bool producesMidi() const override;
     bool isMidiEffect() const override;
     double getTailLengthSeconds() const override;
-
-    // Programs
     int getNumPrograms() override;
     int getCurrentProgram() override;
     void setCurrentProgram (int index) override;
     const juce::String getProgramName (int index) override;
     void changeProgramName (int index, const juce::String& newName) override;
-
-    // State
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
+
 
     // Reference File API for editor
     juce::StringArray getAvailableRefs() const;
     void setSelectedRefIndex (int index);
     void rescanReferenceFolder();
 
-    // A/B switch
-    void setUseReference (bool shouldUse) { useReference.store (shouldUse); }
+    // === MODIFIED A/B SWITCH LOGIC ===
+    void setUseReference (bool shouldUse)
+    {
+        // If we are switching OFF the reference audio...
+        if (!shouldUse && useReference.load())
+        {
+            // ...and the transport is currently playing...
+            if (transportIsPlaying.load())
+            {
+                // ...stop it immediately. This is safe because this function
+                // is called from the message thread (button click).
+                transportSource.stop();
+                transportIsPlaying.store (false);
+            }
+        }
+        useReference.store (shouldUse);
+    }
     bool getUseReference () const         { return useReference.load(); }
 
     // Gain
